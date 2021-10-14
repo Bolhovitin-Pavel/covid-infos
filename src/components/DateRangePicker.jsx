@@ -1,23 +1,40 @@
-import React, { useCallback, useEffect } from "react";
-import DatePickerWithTitle from "./DatePickerWithTitle";
+import React from "react";
+import ReactDatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 
-function DateRangePicker({firstTitle, minDate, startDate, onStartChanged, secondTitle, maxDate, endDate, onEndChanged}) {
-    useEffect(() => console.log("Render DateRangePicker"));
+function DateRangePicker({start, end, min, max, onStartChanged, onEndChanged, firtsTitle, secondTitle}) {
 
-    
-    const dateStartPicker = useCallback(
-        <DatePickerWithTitle currentDate={startDate} onChanged={onStartChanged} minDate={minDate} maxDate={maxDate} title={firstTitle} />
-        ,
-        [startDate, onStartChanged, minDate, maxDate, firstTitle]
-    )
+
+
     return (
         <div className="row">
-            {dateStartPicker}
-            <DatePickerWithTitle currentDate={endDate} onChanged={onEndChanged} minDate={minDate} maxDate={maxDate} title={secondTitle} />
+        <label className="col-md-auto col-form-label">{firtsTitle}</label>
+        <div className="col-md-auto">
+          <ReactDatePicker
+            className="form-control"
+            dateFormat="dd/MM/yyyy"
+            selected={start}
+            onChange={onStartChanged}
+            minDate={min}
+            maxDate={max}
+          />
         </div>
-    );
 
+
+        <label className="col-md-auto col-form-label">{secondTitle}</label>
+        <div className="col-md-auto">
+        <ReactDatePicker
+          className="form-control"
+          dateFormat="dd/MM/yyyy"
+          selected={end}
+          onChange={onEndChanged}
+          minDate={min}
+          maxDate={max}
+        />
+        </div>
+      </div>
+    );
 }
 
 
