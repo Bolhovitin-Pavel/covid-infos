@@ -1,66 +1,82 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import DateRangePicker from "./components/DateRangePicker";
 import CovidTable from "./components/CovidTable";
+import {GetCovidInfoDate} from "./utils/covidInfoUtils";
+import covidInfoData from "./components/covidInfos.json";
 
-
-
-const testCovidInfos = [
-  {
-    "dateRep" : "14/12/2020",
-    "day" : "14",
-    "month" : "12",
-    "year" : "2020",
-    "cases" : 746,
-    "deaths" : 6,
-    "countriesAndTerritories" : "Afghanistan",
-    "geoId" : "AF",
-    "countryterritoryCode" : "AFG",
-    "popData2019" : 38041757,
-    "continentExp" : "Asia",
-    "Cumulative_number_for_14_days_of_COVID-19_cases_per_100000" : "9.01377925"
-  },
-  {
-    "dateRep" : "25/05/2020",
-    "day" : "25",
-    "month" : "05",
-    "year" : "2020",
-    "cases" : 0,
-    "deaths" : 0,
-    "countriesAndTerritories" : "Aruba",
-    "geoId" : "AW",
-    "countryterritoryCode" : "ABW",
-    "popData2019" : 106310,
-    "continentExp" : "America",
-    "Cumulative_number_for_14_days_of_COVID-19_cases_per_100000" : "0"
-  },
-  {
-    "dateRep" : "29/06/2020",
-    "day" : "29",
-    "month" : "06",
-    "year" : "2020",
-    "cases" : 438,
-    "deaths" : 5,
-    "countriesAndTerritories" : "Bahrain",
-    "geoId" : "BH",
-    "countryterritoryCode" : "BHR",
-    "popData2019" : 1641164,
-    "continentExp" : "Asia",
-    "Cumulative_number_for_14_days_of_COVID-19_cases_per_100000" : "436.33664887"
-  },
-];
 
 function App() {
 
-  const [minDate, setMinDate] = useState(new Date(2000, 0));
-  const [maxDate, setMaxDate] = useState(new Date(2050, 0));
+  const [minDate, SetMinDate] = useState(new Date());
+  const [maxDate, SetMaxDate] = useState(new Date());
 
-  const [startDate, setStartDate] = useState(new Date(2000, 0));
-  const [endDate, setEndDate] = useState(new Date(2050, 0));
+  const [startDate, SetStartDate] = useState(new Date());
+  const [endDate, SetEndDate] = useState(new Date(2050, 0));
   
-  const onStartDateChanged = (date) => setStartDate(date);
-  const onEndDateChanged = (date) => setEndDate(date);
+  const onStartDateChanged = (date) => SetStartDate(date);
+  const onEndDateChanged = (date) => SetEndDate(date);
 
-  const [covidInfos, SetCovidInfos] = useState(testCovidInfos);
+  const [covidInfos, SetCovidInfos] = useState([]);
+
+
+  useEffect(() => SetCovidInfos(covidInfoData.records), []);
+
+
+
+
+  //#region Covid Infos Date Limits
+  useEffect(() => {
+    if (covidInfos === undefined || covidInfos === null || covidInfos.length === 0)
+      return;
+
+    const [min, max] = SetupCovidInfosDateLimits(covidInfos);
+    SetMinDate(min);
+    SetMaxDate(max);
+    SetStartDate(min);
+    SetEndDate(max);
+  }, [covidInfos]);
+
+
+
+  function SetupCovidInfosDateLimits(data) {
+    if (covidInfos.length > 0) {
+      let min = new Date(GetCovidInfoDate(data[0]));
+      let max = new Date(GetCovidInfoDate(data[0]));
+
+      for (var i = 1; i < data.length; i++)
+      {
+        // Find min date    
+        if ((data[i].year < min.getUTCFullYear()) ||
+          (data[i].year === min.getUTCFullYear() && (data[i].month - 1) < min.getUTCMonth()) ||
+          (data[i].year === min.getUTCFullYear() && (data[i].month - 1) === min.getUTCMonth() && data[i].day < min.getUTCDate())) {
+            min.setUTCFullYear(data[i].year, data[i].month - 1, data[i].day);
+        }
+
+        // Find max date
+        if ((data[i].year > max.getUTCFullYear()) ||
+          (data[i].year === max.getUTCFullYear() && (data[i].month - 1) > max.getUTCMonth()) ||
+          (data[i].year === max.getUTCFullYear() && (data[i].month - 1) === max.getUTCMonth() && data[i].day > max.getUTCDate())) {
+            max.setUTCFullYear(data[i].year, data[i].month - 1, data[i].day);
+        }
+      }
+
+      return [min, max];
+    }
+    
+    return undefined;
+  }
+  //#endregion
+
+
+
+
+
+
+
+
+
+
+
 
 
   console.log("Render App");
@@ -81,20 +97,25 @@ function App() {
       
 
 
-      <ul class="nav nav-tabs">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="Table" href="#">Таблица</a>
+      <ul className="nav nav-tabs">
+        <li className="nav-item">
+          <button className="nav-link active">Таблица</button>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" aria-current="Chart" href="#">График</a>
+        <li className="nav-item">
+          <button className="nav-link">График</button>
         </li>
       </ul>
 
 
+
       <div className="row mx-0 border border-top-0">
+
         <div className="col">
+
           <div className="mx-3 my-3">
+
             <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/>
+
           </div>
         </div>
       </div>

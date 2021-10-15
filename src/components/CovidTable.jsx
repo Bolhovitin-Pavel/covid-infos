@@ -1,190 +1,193 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState, useMemo} from "react";
 import ReactDataGrid from "react-data-grid";
-
+import {GetGroupedCovidInfo, RemoveOutOfDateRangeGroups, ValidateGroups} from "../utils/groupedCovidInfoUtils"
+import {SortBy, CompareNumbers} from "../utils/sortUtils";
+import Search from "./Search";
+import Button from "react-bootstrap/Button";
+import Form from 'react-bootstrap/Form'
 
 
 const columns = [
     {
         key: "countriesAndTerritories",
         name: "Страна",
+        type: "string",
     },
     {
         key: "cases",
         name: "Количество случаев",
+        type: "number",
     },
     {
         key: "deaths",
         name: "Количество смертей",
+        type: "number",
     },
     {
         key: "allCases",
         name: "Количество случаев всего",
+        type: "number",
     },
     {
         key: "allDeaths",
         name: "Количество смертей всего",
+        type: "number",
     },
     {
         key: "casesPer1000",
         name: "Количество случаев на 1000 житилей",
+        type: "number",
     },
     {
         key: "deathsPer1000",
         name: "Количество смертей на 1000 житилей",
+        type: "number",
     },
 ];
 
 
+
+const defaultFilterField = {key: "default", name: "Фильтровать по полю...", type: "number",};
+const initialSortType = [{ columnKey: 'countriesAndTerritories', direction: 'ASC' }];
+
+const FIELD_FILTER_INPUT_FROM_PLACE_HOLDER = "значение от";
+const FIELD_FILTER_INPUT_TO_PLACE_HOLDER = "значение до";
+const SEARCH_FILTER_PLACE_HOLDER = "Поиск страны...";
+
+
 function CovidTable({covidInfos, startDate, endDate}) {
-    useEffect(() => console.log(covidInfos), [covidInfos, startDate, endDate]);
-    useEffect(() => SetupGroupedCovidInfo(), [covidInfos, startDate, endDate]);
+    useEffect(() => SetupGroupedCovidInfo(covidInfos, startDate, endDate), [covidInfos, startDate, endDate]);
 
-    const [groupedCovidInfos, SetGroupedCovidInfos] = useState(new Array());
+    const [groupedCovidInfos, SetGroupedCovidInfos] = useState([]);
+    const [sortType, setSortType] = useState(initialSortType);
+    const [searchQuery, SetSearchQuery] = useState("");
 
+    const [filterField, SetFilterField] = useState(defaultFilterField.key);
+    const [filterValueFrom, SetFilterValueFrom] = useState("");
+    const [filterValueTo, SetFilterValueTo] = useState("");
 
-
-    
-
-    //#region Grouped Covid Infos By Country Name
-    function SetupGroupedCovidInfo() {
+    function SetupGroupedCovidInfo(covidInfos, startDate, endDate) {
         console.log("Group Covid Infos By Country Name");
 
-        let groups = GetGroupedCovidInfo();
+        let groups = GetGroupedCovidInfo(covidInfos, startDate, endDate);
         RemoveOutOfDateRangeGroups(groups);
         ValidateGroups(groups);
         SetGroupedCovidInfos(groups);
-
     }
 
 
-    function GetGroupedCovidInfo() {
-        let groups = new Array();
-        console.log(covidInfos);
+    const sortedGroupedCovidInfos = useMemo(() => {
+        console.log("Sort Covid Groups");
 
-        // Group covid infos by country name
-        covidInfos.forEach(info => {
-            var infoDate = GetCovidInfoDate(info);
-            var isInfoDateInUserRangeRequest = IsInDateRange(infoDate, startDate, endDate, true);
-            var foundedGroup = groups.find(group => group.countriesAndTerritories === info.countriesAndTerritories);
-
-            // Add to exist group: cases in date range, deaths in date range, all cases, all deaths
-            if (foundedGroup != null) {
-            if (isInfoDateInUserRangeRequest) {
-                foundedGroup.cases += info.cases;
-                foundedGroup.deaths += info.deaths;
-            }
-            foundedGroup.allCases += info.cases;
-            foundedGroup.allDeaths += info.deaths;
-            }
-            // Setup new group
-            else {
-            groups.push({
-                countriesAndTerritories: info.countriesAndTerritories,
-                cases: isInfoDateInUserRangeRequest ? info.cases : 0,
-                deaths: isInfoDateInUserRangeRequest ? info.deaths : 0,
-                allCases: info.cases,
-                allDeaths: info.deaths,
-                casesPer1000: 0,
-                deathsPer1000: 0,
-                popData2019 : info.popData2019,
-            });
-            }
-        }, 0)
-
-        // Setup cases per 1000, deaths per 1000
-        groups.forEach((group, index) => {
-            group.id = index;
-            group.casesPer1000 = RoundNumber(GetFraction(group.cases, group.popData2019, 1000));
-            group.deathsPer1000 = RoundNumber(GetFraction(group.deaths, group.popData2019, 1000));
-        });
-
-        return groups;
-    }
-
-
-    function GetCovidInfoDate(covidInfo) {
-        return new Date(Date.UTC(covidInfo.year, covidInfo.month - 1, covidInfo.day));
-    }
-
-
-    function IsInDateRange(date, rangeStartDate, rangeEndDate, inclusive) {
-        if (inclusive) {
-            if (rangeStartDate <= date && date <= rangeEndDate)
-            return true;
-        }
-        else {
-            if (rangeStartDate < date && date < rangeEndDate)
-            return true;
-        }
-
-        return false;
-    }
-
-
-    function GetFraction(value, allCount, targetCount) {
-        value = Number.parseFloat(value);
-        allCount = Number.parseFloat(allCount);
-        targetCount = Number.parseFloat(targetCount);
-
-        if (isNaN(value) || isNaN(allCount) || isNaN(targetCount))
-            return NaN;
+        if (sortType.length > 0)
+            return [...groupedCovidInfos].sort(SortBy(CompareNumbers, sortType[0].direction, {field:sortType[0].columnKey}));
         else
-            return value / allCount * targetCount;
+            return groupedCovidInfos;
+    }, [groupedCovidInfos, sortType]);
+
+
+    function OnSort(sortType) {
+      setSortType(sortType);
     }
 
 
-    function RoundNumber(number) {
-        return Math.round(number * 1000) / 1000;
-    }
+    const searchedSortedGroupedCovidInfos = useMemo(() => {
+        console.log("Setup Groups In Search Query");
+
+        if (searchQuery !== "")
+            return sortedGroupedCovidInfos.filter(
+                group => group.countriesAndTerritories.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1
+            );
+        else
+            return sortedGroupedCovidInfos;
+    }, [sortedGroupedCovidInfos, searchQuery]);
 
 
-    // Remove out of date range groups (groups without statistics (groups with zero cases and zero deaths))
-    function RemoveOutOfDateRangeGroups(groups) {
-        for (var i = groups.length - 1; i >= 0; i--) {
-            if (groups[i].cases === 0 && groups[i].deaths === 0) {
-            groups.splice(i, 1);
-            }
-        }
-    }
+    const filteredSearchedSortedGroupedCovidInfos = useMemo(() => {
+        console.log("Filter Groups");
 
-    function ValidateGroups(groups) {
-        groups.forEach(
-            group => ValidateGroup(group)
+        const parsedFrom = parseFloat(filterValueFrom);
+        const parsedTo = parseFloat(filterValueTo);
+        const from = isNaN(parsedFrom) ? -Infinity : parsedFrom;
+        const to = isNaN(parsedTo) ? Infinity : parsedTo;
+        
+        if (filterField !== defaultFilterField.key)
+            return searchedSortedGroupedCovidInfos.filter(
+                group => (from <= group[filterField] && group[filterField] <= to)
+            );
+        else
+            return searchedSortedGroupedCovidInfos;
+    }, [searchedSortedGroupedCovidInfos, filterField, filterValueFrom, filterValueTo]);
+
+
+
+    // useEffect(() => GetGroupsInSearchQuery(), [groupedCovidInfos]);
+
+    function RenderEmptyRow() {
+        return (
+            <div style={{ textAlign: "center", padding: "12px" }}>
+                Ничего не найдено
+            </div>
         );
     }
-
-    function ValidateGroup(group) {
-        group.cases = ValidateNumber(group.cases);
-        group.deaths = ValidateNumber(group.deaths);
-        group.allCases = ValidateNumber(group.allCases);
-        group.allDeaths = ValidateNumber(group.allDeaths);
-        group.casesPer1000 = ValidateNumber(group.casesPer1000);
-        group.deathsPer1000 = ValidateNumber(group.deathsPer1000);
-    }
-
-    function ValidateNumber(number) {
-        let parsedNumber = Number.parseFloat(number);
-        if (Number.isNaN(parsedNumber))
-            return "Нет данных";
-        else if (Number.isFinite(parsedNumber) === false)
-            return 0;
-        else
-            return number;
-    }
-    //#endregion
 
 
     console.log("Render CovidTable");
     return (
-        <ReactDataGrid
-            columns={columns}
-            rows={groupedCovidInfos}
-            defaultColumnOptions={{
-              resizable: true,
-              sortable: true,
-            }}
-            className="rdg-light"
-        />
+        <>
+            <div className="row">
+                <div className="col-md-auto">
+                    <Search placeHolder={SEARCH_FILTER_PLACE_HOLDER} value={searchQuery} onChange={(event) => SetSearchQuery(event.target.value)}/>
+                </div>
+
+                <div className="col-md mb-3">
+                    <div className="input-group">
+                        <Form.Select className="me-3" value={filterField} onChange={event => SetFilterField(event.target.value)}>
+                            {[defaultFilterField, ...columns].map((field, index) => {
+                                if (field.type === "number")
+                                    return <option key={index} value={field.key}>{field.name}</option>
+                                else
+                                    return;
+                            })}
+                        </Form.Select>
+
+                        <input
+                            type="number"
+                            className="form-control me-3"
+                            placeholder={FIELD_FILTER_INPUT_FROM_PLACE_HOLDER}
+                            value={filterValueFrom}
+                            onChange={event => SetFilterValueFrom(event.target.value)}
+                        />
+                        <input
+                            type="number"
+                            className="form-control"
+                            placeholder={FIELD_FILTER_INPUT_TO_PLACE_HOLDER}
+                            value={filterValueTo}
+                            onChange={event => SetFilterValueTo(event.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="d-flex flex-row-reverse mb-3">
+                <div className="col-md-auto">
+                    <Button variant="warning" onClick={() => console.log("Reset filters")}>Сбросить фильтры</Button>
+                </div>
+            </div>
+
+            <ReactDataGrid
+                columns={columns}
+                rows={filteredSearchedSortedGroupedCovidInfos}
+                defaultColumnOptions={{
+                resizable: true,
+                sortable: true,
+                }}
+                sortColumns={sortType}
+                onSortColumnsChange={OnSort}
+                noRowsFallback={<RenderEmptyRow/>}
+                className="rdg-light"
+            />
+        </>
     );
 }
 
