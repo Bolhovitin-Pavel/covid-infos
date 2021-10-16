@@ -3,6 +3,10 @@ import DateRangePicker from "./components/DateRangePicker";
 import CovidTable from "./components/CovidTable";
 import {GetCovidInfoDate} from "./utils/covidInfoUtils";
 import covidInfoData from "./components/covidInfos.json";
+import Tabs from 'react-bootstrap/Tabs';
+import Tab from 'react-bootstrap/Tab';
+import CovidChart from "./components/CovidChart";
+import { IsDateInRange } from "./utils/groupedCovidInfoUtils";
 
 
 function App() {
@@ -17,7 +21,7 @@ function App() {
   const onEndDateChanged = (date) => SetEndDate(date);
 
   const [covidInfos, SetCovidInfos] = useState([]);
-
+  const [tabKey, SetTabKey] = useState("table");
 
   useEffect(() => SetCovidInfos(covidInfoData.records), []);
 
@@ -71,14 +75,6 @@ function App() {
 
 
 
-
-
-
-
-
-
-
-
   console.log("Render App");
   return (
     <div className="App container">
@@ -97,28 +93,33 @@ function App() {
       
 
 
-      <ul className="nav nav-tabs">
-        <li className="nav-item">
-          <button className="nav-link active">Таблица</button>
-        </li>
-        <li className="nav-item">
-          <button className="nav-link">График</button>
-        </li>
-      </ul>
 
 
-
-      <div className="row mx-0 border border-top-0">
-
-        <div className="col">
-
-          <div className="mx-3 my-3">
-
-            <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/>
-
+      <Tabs
+        id="controlled-tab-example"
+        activeKey={tabKey}
+        onSelect={(k) => SetTabKey(k)}
+      >
+        <Tab eventKey="table" title="Таблица">
+          <div className="row mx-0 border border-top-0">
+            <div className="col mx-3 my-3">
+              <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/>
+            </div>
           </div>
-        </div>
-      </div>
+
+        </Tab>
+        <Tab eventKey="chart" title="График">
+          <div className="row mx-0 border border-top-0">
+              <div className="col">
+                <CovidChart />
+              </div>
+          </div>
+        </Tab>
+      </Tabs>
+
+
+      
+
 
       
     </div>

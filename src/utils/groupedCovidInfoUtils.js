@@ -1,4 +1,4 @@
-import {IsInDateRange} from "./dateUtils";
+import {IsDateInRange} from "./dateUtils";
 import {GetCovidInfoDate} from "./covidInfoUtils";
 
 
@@ -9,7 +9,7 @@ export function GetGroupedCovidInfo(covidInfos, startDate, endDate) {
     // Group covid infos by country name
     covidInfos.forEach(info => {
         var infoDate = GetCovidInfoDate(info);
-        var isInfoDateInUserRangeRequest = IsInDateRange(infoDate, startDate, endDate, true);
+        var isInfoDateInUserRangeRequest = IsDateInRange(infoDate, startDate, endDate, true);
         var foundedGroup = groups.find(group => group.countriesAndTerritories === info.countriesAndTerritories);
 
         // Add to exist group: cases in date range, deaths in date range, all cases, all deaths
@@ -100,3 +100,56 @@ function ValidateNumber(number) {
     else
         return number;
 }
+
+// Group Covid Infos By Date:
+// Limitation by date (query in date range)
+// Limitation by country (one county / all counties)
+// Output objects: {date: #, cases: #, deaths: #}
+// export function GetGroupedCovidInfoByDate(covidInfos, startDate, endDate, country) {
+//     let groups = [];
+
+//     covidInfos.map(info => {
+        
+//     });
+// }
+
+// "dateRep" : "14/12/2020",
+// "day" : "14",
+// "month" : "12",
+// "year" : "2020",
+
+// IsDateInRange(covidInfo[date], startDate, endDate, true);
+// IsStringEquals(target, compare)
+// IsStringEquals(covidInfo[countriesAndTerritories], compare);
+
+
+// function Test(covidInfo, field, startDate, endDate) {
+//     return IsDateInRange(covidInfo[field], startDate, endDate, true);
+// }
+
+
+
+// function CheckAdmissibilityBy(limitation) {
+//     const GetKey = options !== undefined && options.hasOwnProperty("field")
+//         ? (value) => value[options.field]
+//         : (value) => value;
+
+//     const GetParsedKey = options !== undefined && options.hasOwnProperty("valueParser")
+//         ? (value) => options.valueParser(GetKey(value))
+//         : (value) => GetKey(value);
+
+//     return function (value) {
+//         return options(value);
+//     }
+// }
+
+
+
+// /**
+//  * 
+//  * @param {*} value 
+//  * @param {function} limitation 
+//  */
+// function CheckValueForLimitation(value, limitation) {
+//     return limitation(value);
+// }

@@ -1,14 +1,8 @@
 
 
-export function IsInDateRange(date, rangeStartDate, rangeEndDate, inclusive) {
-    if (inclusive) {
-        if (rangeStartDate <= date && date <= rangeEndDate)
-        return true;
-    }
-    else {
-        if (rangeStartDate < date && date < rangeEndDate)
-        return true;
-    }
-
-    return false;
+export function IsDateInRange(date, from, to, inclusive) {
+    if (inclusive)
+        return (from <= date && date <= to) ? true : false;
+    else
+        return (from < date && date < to) ? true : false;
 }

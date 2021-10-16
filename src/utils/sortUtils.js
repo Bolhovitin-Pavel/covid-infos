@@ -28,7 +28,20 @@ export function CompareStrings(a, b) {
 }
 
 export function CompareNumbers(a, b) {
-    return a < b ? -1 : (b < a ? 1 : 0);
+    const parsedA = parseFloat(a);
+    const parsedB = parseFloat(b);
+
+    const isANaN = isNaN(parsedA);
+    const isBNaN = isNaN(parsedB);
+
+    if (isANaN && isBNaN)
+        return 0;
+    else if (isANaN)
+        return -1;
+    else if (isBNaN)
+        return 1;
+    else
+        return a < b ? -1 : (b < a ? 1 : 0);
 }
 
 export function SortBy(comparer, sortDirection, options) {
