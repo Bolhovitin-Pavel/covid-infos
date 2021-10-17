@@ -3,20 +3,22 @@
 function GetSortDirection(sortDirection) {
     if (typeof sortDirection === "number") {
         if (sortDirection > 0)
-        return 1;
+            return 1;
         else if (sortDirection < 0)
-        return -1;
+            return -1;
     }
     else if (typeof sortDirection === "string") {
         switch (sortDirection.toLowerCase()) {
-        case "asc":
-            return 1;
-        case "ascending":
-            return 1;
-        case "desc":
-            return -1;
-        case "descending":
-            return -1;
+            case "asc":
+                return 1;
+            case "ascending":
+                return 1;
+            case "desc":
+                return -1;
+            case "descending":
+                return -1;
+            default:
+                return 1;
         }
     }
 

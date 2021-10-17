@@ -6,7 +6,6 @@ import covidInfoData from "./components/covidInfos.json";
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import CovidChart from "./components/CovidChart";
-import { IsDateInRange } from "./utils/groupedCovidInfoUtils";
 
 
 function App() {
@@ -98,12 +97,14 @@ function App() {
       <Tabs
         id="controlled-tab-example"
         activeKey={tabKey}
-        onSelect={(k) => SetTabKey(k)}
+        onSelect={(key) => SetTabKey(key)}
+        unmountOnExit={true}
       >
         <Tab eventKey="table" title="Таблица">
           <div className="row mx-0 border border-top-0">
             <div className="col mx-3 my-3">
-              <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/>
+              {tabKey === "table" ? <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> : null}
+              {/* <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> */}
             </div>
           </div>
 
@@ -111,14 +112,12 @@ function App() {
         <Tab eventKey="chart" title="График">
           <div className="row mx-0 border border-top-0">
               <div className="col">
-                <CovidChart />
+                {tabKey === "chart" ? <CovidChart covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> : null}
+                {/* <CovidChart chartDataPreset={covidInfos}/> */}
               </div>
           </div>
         </Tab>
       </Tabs>
-
-
-      
 
 
       

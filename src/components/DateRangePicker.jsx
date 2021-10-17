@@ -17,7 +17,7 @@ function DateRangePicker({start, end, min, max, onStartChanged, onEndChanged, fi
             selected={start}
             onChange={onStartChanged}
             minDate={min}
-            maxDate={max}
+            maxDate={end}
           />
         </div>
 
@@ -29,7 +29,7 @@ function DateRangePicker({start, end, min, max, onStartChanged, onEndChanged, fi
           dateFormat="dd/MM/yyyy"
           selected={end}
           onChange={onEndChanged}
-          minDate={min}
+          minDate={start}
           maxDate={max}
         />
         </div>

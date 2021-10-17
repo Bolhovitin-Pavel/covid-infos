@@ -1,5 +1,6 @@
 import {IsDateInRange} from "./dateUtils";
 import {GetCovidInfoDate} from "./covidInfoUtils";
+import { SortBy } from "./sortUtils";
 
 
 // Group Covid Infos By Country Name
@@ -101,55 +102,60 @@ function ValidateNumber(number) {
         return number;
 }
 
+
+
+
+
+
+
+
 // Group Covid Infos By Date:
 // Limitation by date (query in date range)
 // Limitation by country (one county / all counties)
-// Output objects: {date: #, cases: #, deaths: #}
-// export function GetGroupedCovidInfoByDate(covidInfos, startDate, endDate, country) {
-//     let groups = [];
-
-//     covidInfos.map(info => {
-        
-//     });
-// }
-
-// "dateRep" : "14/12/2020",
-// "day" : "14",
-// "month" : "12",
-// "year" : "2020",
-
-// IsDateInRange(covidInfo[date], startDate, endDate, true);
-// IsStringEquals(target, compare)
-// IsStringEquals(covidInfo[countriesAndTerritories], compare);
+// Output objects: {dates: [], casesGroups: []], deathsGroups: []]}
+export function GetGroupedCovidInfoByDate(covidInfos, startDate, endDate, country) {
+    let groups = [];
 
 
-// function Test(covidInfo, field, startDate, endDate) {
-//     return IsDateInRange(covidInfo[field], startDate, endDate, true);
-// }
+    covidInfos.forEach(info => {
+        const infoDate = GetCovidInfoDate(info);
+
+        const foundGroup = groups.find(group => group.date.getTime() === infoDate.getTime());
+
+        const parsedCases = parseFloat(info.cases);
+        const parsedDeaths = parseFloat(info.deaths);
+
+        if (foundGroup !== undefined) {
+            foundGroup.cases += isNaN(parsedCases) ? 0: parsedCases;
+            foundGroup.deaths += isNaN(parsedDeaths) ? 0: parsedDeaths;
+        }
+        else {
+            groups.push({
+                date: infoDate,
+                cases: isNaN(parsedCases) ? 0: parsedCases,
+                deaths: isNaN(parsedDeaths) ? 0: parsedDeaths,
+            });
+        }
+
+        // if (IsDateInRange(infoDate, startDate, endDate, true)) {
+
+        // }
+    });
 
 
+    // SORT DATAS
 
-// function CheckAdmissibilityBy(limitation) {
-//     const GetKey = options !== undefined && options.hasOwnProperty("field")
-//         ? (value) => value[options.field]
-//         : (value) => value;
-
-//     const GetParsedKey = options !== undefined && options.hasOwnProperty("valueParser")
-//         ? (value) => options.valueParser(GetKey(value))
-//         : (value) => GetKey(value);
-
-//     return function (value) {
-//         return options(value);
-//     }
-// }
+    groups.sort(SortBy(CompareDates, "ASC", {field: "date"}));
+    return groups;
+}
 
 
 
-// /**
-//  * 
-//  * @param {*} value 
-//  * @param {function} limitation 
-//  */
-// function CheckValueForLimitation(value, limitation) {
-//     return limitation(value);
-// }
+function CompareDates(a, b) {
+    if (a < b)
+        return -1;
+    else if (a > b)
+        return 1;
+    else
+        return 0;
+}
