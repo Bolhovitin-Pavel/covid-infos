@@ -1,12 +1,18 @@
 import React, {useEffect, useState, useMemo} from "react";
+
 import ReactDataGrid from "react-data-grid";
-import {GetGroupedCovidInfo, RemoveOutOfDateRangeGroups, ValidateGroups} from "../utils/groupedCovidInfoUtils"
-import {SortBy, CompareNumbers, CompareStrings} from "../utils/sortUtils";
 import Button from "react-bootstrap/Button";
 import Form from 'react-bootstrap/Form'
-import 'bootstrap-icons/font/bootstrap-icons.css';
+
 import CustomPagination from "./CustomPagination";
+
+import { SortBy, GetSortDirection, CompareNumbers, CompareStrings } from "../utils/sortUtils";
 import { GetPageCount, IsItemInPage } from "../utils/paginationUtils";
+import { ValidateNumber } from "../utils/validationUtils";
+import { GetCovidInfoDate } from "../utils/covidInfoUtils";
+import { IsDateInRange } from "../utils/dateUtils";
+
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 
 const columns = [
@@ -61,6 +67,96 @@ const FIELD_FILTER_INPUT_TO_PLACE_HOLDER = "значение до";
 const SEARCH_FILTER_PLACE_HOLDER = "Поиск страны...";
 
 
+// Group Covid Infos By Country Name
+function GetGroupedCovidInfo(covidInfos, startDate, endDate) {
+    let groups = [];
+
+    // Group covid infos by country name
+    covidInfos.forEach(info => {
+        var infoDate = GetCovidInfoDate(info);
+        var isInfoDateInUserRangeRequest = IsDateInRange(infoDate, startDate, endDate, true);
+        var foundedGroup = groups.find(group => group.countriesAndTerritories === info.countriesAndTerritories);
+
+        // Add to exist group: cases in date range, deaths in date range, all cases, all deaths
+        if (foundedGroup != null) {
+        if (isInfoDateInUserRangeRequest) {
+            foundedGroup.cases += info.cases;
+            foundedGroup.deaths += info.deaths;
+        }
+        foundedGroup.allCases += info.cases;
+        foundedGroup.allDeaths += info.deaths;
+        }
+        // Setup new group
+        else {
+        groups.push({
+            countriesAndTerritories: info.countriesAndTerritories,
+            cases: isInfoDateInUserRangeRequest ? info.cases : 0,
+            deaths: isInfoDateInUserRangeRequest ? info.deaths : 0,
+            allCases: info.cases,
+            allDeaths: info.deaths,
+            casesPer1000: 0,
+            deathsPer1000: 0,
+            popData2019 : info.popData2019,
+        });
+        }
+    }, 0)
+
+    // Setup cases per 1000, deaths per 1000
+    groups.forEach((group, index) => {
+        group.id = index;
+        group.casesPer1000 = RoundNumber(GetFraction(group.cases, group.popData2019, 1000));
+        group.deathsPer1000 = RoundNumber(GetFraction(group.deaths, group.popData2019, 1000));
+    });
+
+    return groups;
+}
+
+
+function GetFraction(value, allCount, targetCount) {
+    value = Number.parseFloat(value);
+    allCount = Number.parseFloat(allCount);
+    targetCount = Number.parseFloat(targetCount);
+
+    if (isNaN(value) || isNaN(allCount) || isNaN(targetCount))
+        return NaN;
+    else
+        return value / allCount * targetCount;
+}
+
+
+function RoundNumber(number) {
+    return Math.round(number * 1000) / 1000;
+}
+
+
+// Remove out of date range groups (groups without statistics (groups with zero cases and zero deaths))
+function RemoveOutOfDateRangeGroups(groups) {
+    for (var i = groups.length - 1; i >= 0; i--) {
+        if (groups[i].cases === 0 && groups[i].deaths === 0) {
+        groups.splice(i, 1);
+        }
+    }
+}
+
+function ValidateGroups(groups) {
+    groups.forEach(
+        group => ValidateGroup(group)
+    );
+}
+
+const VALIDATION_NAN_VALUE = "Нет данных";
+const VALIDATION_INF_VALUE = 0;
+const VALIDATION_SPECIAL_CASES = {nanValue: VALIDATION_NAN_VALUE, infValue: VALIDATION_INF_VALUE};
+
+function ValidateGroup(group) {
+    group.cases = ValidateNumber(group.cases, VALIDATION_SPECIAL_CASES);
+    group.deaths = ValidateNumber(group.deaths, VALIDATION_SPECIAL_CASES);
+    group.allCases = ValidateNumber(group.allCases, VALIDATION_SPECIAL_CASES);
+    group.allDeaths = ValidateNumber(group.allDeaths, VALIDATION_SPECIAL_CASES);
+    group.casesPer1000 = ValidateNumber(group.casesPer1000, VALIDATION_SPECIAL_CASES);
+    group.deathsPer1000 = ValidateNumber(group.deathsPer1000, VALIDATION_SPECIAL_CASES);
+}
+
 
 function CovidTable({covidInfos, startDate, endDate}) {
     useEffect(() => SetupGroupedCovidInfo(covidInfos, startDate, endDate), [covidInfos, startDate, endDate]);
@@ -94,7 +190,7 @@ function CovidTable({covidInfos, startDate, endDate}) {
             const compareFunction = (GetColumnType(sortType[0].columnKey) === "number") ? CompareNumbers : CompareStrings;
             const sortDirection = sortType[0].direction;
             const sortField = {field:sortType[0].columnKey};
-            return [...groupedCovidInfos].sort(SortBy(compareFunction, sortDirection, sortField));
+            return [...groupedCovidInfos].sort(SortBy(compareFunction, GetSortDirection(sortDirection), sortField));
         }
         else
             return groupedCovidInfos;

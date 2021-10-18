@@ -2,10 +2,15 @@ import React, { useState, useEffect } from "react";
 import DateRangePicker from "./components/DateRangePicker";
 import CovidTable from "./components/CovidTable";
 import {GetCovidInfoDate} from "./utils/covidInfoUtils";
-import covidInfoData from "./components/covidInfos.json";
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import CovidChart from "./components/CovidChart";
+import CovidInfoService from "./API/CovidInfoService";
+import Spinner from "react-bootstrap/Spinner";
+import "./styles/loading.css";
+import Container from 'react-bootstrap/Container'
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
 
 
 function App() {
@@ -14,7 +19,7 @@ function App() {
   const [maxDate, SetMaxDate] = useState(new Date());
 
   const [startDate, SetStartDate] = useState(new Date());
-  const [endDate, SetEndDate] = useState(new Date(2050, 0));
+  const [endDate, SetEndDate] = useState(new Date());
   
   const onStartDateChanged = (date) => SetStartDate(date);
   const onEndDateChanged = (date) => SetEndDate(date);
@@ -22,10 +27,18 @@ function App() {
   const [covidInfos, SetCovidInfos] = useState([]);
   const [tabKey, SetTabKey] = useState("table");
 
-  useEffect(() => SetCovidInfos(covidInfoData.records), []);
+
+  const [isCovidInfoLoading, SetIsCovidInfoLoading] = useState(true);
+
+  useEffect(() => FetchCovidInfo(), []);
 
 
-
+  async function FetchCovidInfo() {
+    SetIsCovidInfoLoading(true);
+    const data = await CovidInfoService.GetDataFromProxyServer();
+    SetIsCovidInfoLoading(false);
+    SetCovidInfos(data);
+  }
 
   //#region Covid Infos Date Limits
   useEffect(() => {
@@ -42,6 +55,9 @@ function App() {
 
 
   function SetupCovidInfosDateLimits(data) {
+    if (covidInfos === undefined || covidInfos === null || covidInfos.length === 0)
+    return;
+
     if (covidInfos.length > 0) {
       let min = new Date(GetCovidInfoDate(data[0]));
       let max = new Date(GetCovidInfoDate(data[0]));
@@ -71,57 +87,80 @@ function App() {
   //#endregion
 
 
-
-
-
   console.log("Render App");
   return (
+    <>
+
+
+      {isCovidInfoLoading === true
+      ?
+
+      <Container fluid>
+      <Row className="justify-content-center">
+      <Col md="auto">
+      <div className="lds-facebook justify-content-center"><div></div><div></div><div></div></div>
+      </Col>
+      </Row>
+
+      <Row className="justify-content-center">
+      <Col md="auto">
+      <h1>Loading</h1>
+      </Col>
+      </Row>
+      </Container>
+
+
+      :
+          
+
     <div className="App container">
-      <div className="row my-3">
-        <DateRangePicker
-          start={startDate}
-          end={endDate}
-          min={minDate}
-          max={maxDate}
-          onStartChanged={onStartDateChanged}
-          onEndChanged={onEndDateChanged}
-          firtsTitle={"Период от"}
-          secondTitle={"до"}
-        />
-      </div>
-      
-
-
-
-
-      <Tabs
-        id="controlled-tab-example"
-        activeKey={tabKey}
-        onSelect={(key) => SetTabKey(key)}
-        unmountOnExit={true}
-      >
-        <Tab eventKey="table" title="Таблица">
-          <div className="row mx-0 border border-top-0">
-            <div className="col mx-3 my-3">
-              {tabKey === "table" ? <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> : null}
-              {/* <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> */}
-            </div>
-          </div>
-
-        </Tab>
-        <Tab eventKey="chart" title="График">
-          <div className="row mx-0 border border-top-0">
-              <div className="col">
-                {tabKey === "chart" ? <CovidChart covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> : null}
-                {/* <CovidChart chartDataPreset={covidInfos}/> */}
-              </div>
-          </div>
-        </Tab>
-      </Tabs>
-
-
-      
+    <div className="row my-3">
+      <DateRangePicker
+        start={startDate}
+        end={endDate}
+        min={minDate}
+        max={maxDate}
+        onStartChanged={onStartDateChanged}
+        onEndChanged={onEndDateChanged}
+        firtsTitle={"Период от"}
+        secondTitle={"до"}
+      />
     </div>
+    
+
+
+
+
+    <Tabs
+      id="controlled-tab-example"
+      activeKey={tabKey}
+      onSelect={(key) => SetTabKey(key)}
+      unmountOnExit={false}
+    >
+      <Tab eventKey="table" title="Таблица">
+        <div className="row mx-0 border border-top-0">
+          <div className="col mx-3 my-3">
+            {tabKey === "table" ? <CovidTable covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> : null}
+          </div>
+        </div>
+
+      </Tab>
+      <Tab eventKey="chart" title="График">
+        <div className="row mx-0 border border-top-0">
+            <div className="col mb-3">
+              {tabKey === "chart" ? <CovidChart covidInfos={covidInfos} startDate={startDate} endDate={endDate}/> : null}
+            </div>
+        </div>
+      </Tab>
+    </Tabs>
+
+
+    
+  </div>
+          }
+
+    </>
+
   );
 }
 

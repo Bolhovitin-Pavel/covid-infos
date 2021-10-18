@@ -1,33 +1,22 @@
 
 
-function GetSortDirection(sortDirection) {
-    if (typeof sortDirection === "number") {
-        if (sortDirection > 0)
-            return 1;
-        else if (sortDirection < 0)
-            return -1;
-    }
-    else if (typeof sortDirection === "string") {
-        switch (sortDirection.toLowerCase()) {
-            case "asc":
-                return 1;
-            case "ascending":
-                return 1;
-            case "desc":
-                return -1;
-            case "descending":
-                return -1;
-            default:
-                return 1;
-        }
-    }
+export function GetSortDirection(sortDirection) {
+    if (typeof sortDirection === "string")
+        sortDirection = sortDirection.toUpperCase();
 
-    return 1;
+    if (sortDirection === 1 || sortDirection === "1" || sortDirection === "ASC" || sortDirection === "ASCENDING")
+        return 1;
+    else if (sortDirection === -1 || sortDirection === "-1" || sortDirection === "DESC" || sortDirection === "DESCENDING")
+        return -1;
+    else
+        return 1;
 }
+
 
 export function CompareStrings(a, b) {
     return a.localeCompare(b);
 }
+
 
 export function CompareNumbers(a, b) {
     const parsedA = parseFloat(a);
@@ -46,16 +35,33 @@ export function CompareNumbers(a, b) {
         return a < b ? -1 : (b < a ? 1 : 0);
 }
 
-export function SortBy(comparer, sortDirection, options) {
-    const GetKey = options !== undefined && options.hasOwnProperty("field")
-    ? (value) => value[options.field]
+
+export function CompareDates(a, b) {
+    if (a < b)
+        return -1;
+    else if (a > b)
+        return 1;
+    else
+        return 0;
+}
+
+
+/**
+ * @param {*} comparer Function to compare some values.
+ * @param {*} sortDirection Direction to sort: -1 or 1
+ * @param {*} optional Optional parametr - object with possible properties: {field: #, valueParser: #}; [field] - object field to sort by; [valueParser] - function to parse value;
+ * @returns Target object comparison function.
+ */
+export function SortBy(comparer, sortDirection, optional) {
+    const GetKey = optional !== undefined && optional.hasOwnProperty("field")
+    ? (value) => value[optional.field]
     : (value) => value;
 
-    const GetParsedKey = options !== undefined && options.hasOwnProperty("valueParser")
-        ? (value) => options.valueParser(GetKey(value))
+    const GetParsedKey = optional !== undefined && optional.hasOwnProperty("valueParser")
+        ? (value) => optional.valueParser(GetKey(value))
         : (value) => GetKey(value);
 
     return function(a, b) {
-        return comparer(GetParsedKey(a), GetParsedKey(b)) * GetSortDirection(sortDirection);
+        return comparer(GetParsedKey(a), GetParsedKey(b)) * sortDirection;
     }
 }
