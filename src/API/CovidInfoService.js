@@ -31,7 +31,7 @@ export default class CovidInfoService {
                     return data;
                 }
                 catch (e) {
-                    throw "Error, trying to fetch data.";
+                    throw new Error("Error, trying to fetch data.");
                 }
             }
         }
@@ -49,7 +49,7 @@ export default class CovidInfoService {
             return response.data.records;
         }
         catch (e) {
-            throw `Cannot access to server (${server}).`;
+            throw new Error(`Cannot access to server (${server}).`);
         }
     }
 }

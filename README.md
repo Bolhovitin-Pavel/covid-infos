@@ -1,5 +1,7 @@
 # covid-infos
-A website for displaying statistics about the coronavirus.
+This website display statistics about the coronavirus <https://bolhovitin-pavel.github.io/covid-infos/>.
 
-Data is taken from an external source API: <https://opendata.ecdc.europa.eu/covid19/casedistribution/json/>.
-If this is not possible, then the data is taken from a local proxy server with port 3001, otherwise the data is loaded locally.
+Covid data is taken from one of these sources, depending on their availability:
+1.  From external, open source API (<https://opendata.ecdc.europa.eu/covid19/casedistribution/json/>).
+2. From local proxy server <http://localhost:3001/>.
+3. From local file **/covid-infos/src/API/localCovidInfos.json**.

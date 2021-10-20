@@ -171,7 +171,7 @@ function CovidTable({covidInfos, startDate, endDate}) {
             console.log("Setup Groups In Search Query");
 
             return sortedGroupedCovidInfos.filter(
-                group => group.countriesAndTerritories.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1
+                group => group.country.toLowerCase().indexOf(searchQuery.toLowerCase()) > -1
             );
         }
         else
@@ -266,7 +266,7 @@ function CovidTable({covidInfos, startDate, endDate}) {
                         if (field.type === "number")
                             return <option key={index} value={field.key}>{field.name}</option>
                         else
-                            return;
+                            return null;
                     })}
                 </Form.Select>
             </div>
