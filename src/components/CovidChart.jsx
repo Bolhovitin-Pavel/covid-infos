@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from "react";
+
 import { Line } from 'react-chartjs-2';
-import { IsDateInRange } from "../utils/dateUtils";
-import { GetCountyList, GetCovidInfoDate } from "../utils/covidInfoUtils";
 import Form from "react-bootstrap/Form";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
+
+import { IsDateInRange } from "../utils/dateUtils";
+import { GetCountyList, GetCovidInfoDate } from "../utils/covidInfoUtils";
 import { SortBy, CompareStrings, CompareDates, GetSortDirection } from "../utils/sortUtils";
 
 
@@ -83,9 +85,6 @@ const DEFAULT_COUNTRY_FILTER = {value: ALL_COUNTRY_FILTER, name: "Все стр�
 
 
 // Group Covid Infos By Date:
-// Limitation by date (query in date range)
-// Limitation by country (one county / all counties)
-// Output objects: {dates: [], casesGroups: []], deathsGroups: []]}
 function GetGroupedCovidInfoByDate(covidInfos, countryFilter) {
     let groups = [];
 
@@ -130,10 +129,7 @@ function CheckCountryFilter(country, countryFilter) {
 function CovidChart({covidInfos, startDate, endDate}) {
 
     const [countryFilter, SetCountryFilter] = useState(DEFAULT_COUNTRY_FILTER.value);
-
-
     const countryList = useMemo(() => GetCountyList(covidInfos).sort(SortBy(CompareStrings, GetSortDirection("ASC"))), [covidInfos]);
-
 
     const groupedCovidInfoByDate = useMemo(() => {
         if (covidInfos === undefined)

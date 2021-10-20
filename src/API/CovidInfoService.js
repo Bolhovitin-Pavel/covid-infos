@@ -2,41 +2,55 @@ import axios from "axios";
 import covidInfoData from "./localCovidInfos.json";
 
 
-
-const PROXY_SERVER = "http://localhost:3000";
+const PROXY_SERVER = "http://localhost:3001";
 const API_SERVER = "https://opendata.ecdc.europa.eu/covid19/casedistribution/json/";
-
 
 
 export default class CovidInfoService {
 
-    static GetDataFromLocal() {
-        return covidInfoData.records;
+    static async GetData() {
+        try {
+            const data = await this.GetDataFromServer(API_SERVER);
+            console.warn("Covid data from API server was loaded successfully.");
+            return data;
+        }
+        catch (e) {
+            console.error(e);
+
+            try {
+                const data = await this.GetDataFromServer(PROXY_SERVER);
+                console.warn("Covid data from proxy server was loaded successfully.");
+                return data;
+            }
+            catch (e) {
+                console.error(e);
+
+                try {
+                    const data = await this.GetDataFromLocal();
+                    console.warn("Local Covid data is used.");
+                    return data;
+                }
+                catch (e) {
+                    throw "Error, trying to fetch data.";
+                }
+            }
+        }
     }
 
 
-    static async GetDataFromProxyServer() {
-        const response = await axios.get(PROXY_SERVER);
-        return response.data.records;
-
-
-        // await axios.get(server)
-        // .then(function (response) {
-        //     return response.data;
-        // })
-        // .catch(function (error) {
-        //     console.error(error);
-        // })
-        // .then(function () {
-        //     // always executed
-        // });
+    static async GetDataFromLocal() {
+        return await covidInfoData.records;
     }
 
 
-
-    static async GetDataFromAPIServer() {
-        const response = await axios.get(API_SERVER);
-        return response.data.records;
+    static async GetDataFromServer(server) {
+        try {
+            const response = await axios.get(server);
+            return response.data.records;
+        }
+        catch (e) {
+            throw `Cannot access to server (${server}).`;
+        }
     }
 }
 
